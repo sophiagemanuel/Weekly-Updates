@@ -8,3 +8,742 @@ headers = {
 }
 
 ## All Property Types
+# === Define Date Range ===
+end_date = datetime.strptime("2025-07-19", "%Y-%m-%d")
+start_date = end_date - timedelta(days=90)
+
+start_str = start_date.strftime("%Y-%m-%dT00:00:00Z")
+end_str = end_date.strftime("%Y-%m-%dT23:59:59Z")
+# All Property Types
+
+
+filter_query = (
+    f"$filter=(OnMarketDate ge {start_str} and OnMarketDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential') and "
+    f"(PropertySubType eq '1/2 Duplex' or PropertySubType eq 'Condo - Hotel' or PropertySubType eq 'Condominium' or PropertySubType eq 'Dock-Rackominium' or PropertySubType eq 'Farm' or PropertySubType eq 'Garage Condo' or PropertySubType eq 'Manufactured Home' or PropertySubType eq 'Mobile Home' or PropertySubType eq 'Modular Home' or PropertySubType eq 'Single Family Residence' or PropertySubType eq 'Townhouse' or PropertySubType eq 'Villa') and "
+    f"(StandardStatus eq 'Active')"
+)
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,OnMarketDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+price_ranges = {
+    "<$250k": (0, 250000),
+    "$250k-$300k": (250000, 300000),
+    "$300k-$400k": (300000, 400000),
+    "$400k-$500k": (400000, 500000),
+    "$500k-$1m": (500000, 1000000),
+    "$1m>": (1000000, float('inf'))
+}
+
+price_counts = {label: 0 for label in price_ranges}
+
+for _, row in df.iterrows():
+    price = row['ListPrice']
+    for label, (low, high) in price_ranges.items():
+        if low <= price < high:
+            price_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Listings by price range:")
+for label, count in price_counts.items():
+    print(f"{label}: {count}")
+
+# Single Family Homes
+filter_query = (
+    f"$filter=(OnMarketDate ge {start_str} and OnMarketDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential') and "
+    f"(PropertySubType eq 'Single Family Residence') and "
+    f"(StandardStatus eq 'Active')"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,OnMarketDate"
+
+
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+price_ranges = {
+    "<$250k": (0, 250000),
+    "$250k-$300k": (250000, 300000),
+    "$300k-$400k": (300000, 400000),
+    "$400k-$500k": (400000, 500000),
+    "$500k-$1m": (500000, 1000000),
+    "$1m>": (1000000, float('inf'))
+}
+
+price_counts = {label: 0 for label in price_ranges}
+
+for _, row in df.iterrows():
+    price = row['ListPrice']
+    for label, (low, high) in price_ranges.items():
+        if low <= price < high:
+            price_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Listings by price range:")
+for label, count in price_counts.items():
+    print(f"{label}: {count}")
+
+# Town House and Condos
+filter_query = (
+    f"$filter=(OnMarketDate ge {start_str} and OnMarketDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential') and "
+    f"(PropertySubType eq 'Townhouse' or PropertySubType eq 'Condominium') and "
+    f"(StandardStatus eq 'Active')"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,OnMarketDate"
+
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+price_ranges = {
+    "<$250k": (0, 250000),
+    "$250k-$300k": (250000, 300000),
+    "$300k-$400k": (300000, 400000),
+    "$400k-$500k": (400000, 500000),
+    "$500k-$1m": (500000, 1000000),
+    "$1m>": (1000000, float('inf'))
+}
+
+price_counts = {label: 0 for label in price_ranges}
+
+for _, row in df.iterrows():
+    price = row['ListPrice']
+    for label, (low, high) in price_ranges.items():
+        if low <= price < high:
+            price_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Listings by price range:")
+for label, count in price_counts.items():
+    print(f"{label}: {count}")
+
+# PENDING
+# === Define Date Range ===
+end_date = datetime.strptime("2025-07-19", "%Y-%m-%d")
+start_date = end_date - timedelta(days=6)
+
+start_str = start_date.strftime("%Y-%m-%dT00:00:00Z")
+end_str = end_date.strftime("%Y-%m-%dT23:59:59Z")
+
+# All Property Types
+
+filter_query = (
+    f"$filter=(ContractStatusChangeDate ge {start_str} and ContractStatusChangeDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential') and "
+    f"(PropertySubType eq '1/2 Duplex' or PropertySubType eq 'Condo - Hotel' or PropertySubType eq 'Condominium' or PropertySubType eq 'Dock-Rackominium' or PropertySubType eq 'Farm' or PropertySubType eq 'Garage Condo' or PropertySubType eq 'Manufactured Home' or PropertySubType eq 'Mobile Home' or PropertySubType eq 'Modular Home' or PropertySubType eq 'Single Family Residence' or PropertySubType eq 'Townhouse' or PropertySubType eq 'Villa') and "
+    f"(StandardStatus eq 'Pending')"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,ContractStatusChangeDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+price_ranges = {
+    "<$250k": (0, 250000),
+    "$250k-$300k": (250000, 300000),
+    "$300k-$400k": (300000, 400000),
+    "$400k-$500k": (400000, 500000),
+    "$500k-$1m": (500000, 1000000),
+    "$1m>": (1000000, float('inf'))
+}
+
+price_counts = {label: 0 for label in price_ranges}
+
+for _, row in df.iterrows():
+    price = row['ListPrice']
+    for label, (low, high) in price_ranges.items():
+        if low <= price < high:
+            price_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Listings by price range:")
+for label, count in price_counts.items():
+    print(f"{label}: {count}")
+
+# Single Family Homes
+
+filter_query = (
+    f"$filter=(ContractStatusChangeDate ge {start_str} and ContractStatusChangeDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential') and "
+    f"(PropertySubType eq 'Single Family Residence') and "
+    f"(StandardStatus eq 'Pending')"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,ContractStatusChangeDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+price_ranges = {
+    "<$250k": (0, 250000),
+    "$250k-$300k": (250000, 300000),
+    "$300k-$400k": (300000, 400000),
+    "$400k-$500k": (400000, 500000),
+    "$500k-$1m": (500000, 1000000),
+    "$1m>": (1000000, float('inf'))
+}
+
+price_counts = {label: 0 for label in price_ranges}
+
+for _, row in df.iterrows():
+    price = row['ListPrice']
+    for label, (low, high) in price_ranges.items():
+        if low <= price < high:
+            price_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Listings by price range:")
+for label, count in price_counts.items():
+    print(f"{label}: {count}")
+
+
+# Townhouse and Condos
+
+filter_query = (
+    f"$filter=(ContractStatusChangeDate ge {start_str} and ContractStatusChangeDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential') and "
+    f"(PropertySubType eq 'Townhouse' or PropertySubType eq 'Condominium') and "
+    f"(StandardStatus eq 'Pending')"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,ContractStatusChangeDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+price_ranges = {
+    "<$250k": (0, 250000),
+    "$250k-$300k": (250000, 300000),
+    "$300k-$400k": (300000, 400000),
+    "$400k-$500k": (400000, 500000),
+    "$500k-$1m": (500000, 1000000),
+    "$1m>": (1000000, float('inf'))
+}
+
+price_counts = {label: 0 for label in price_ranges}
+
+for _, row in df.iterrows():
+    price = row['ListPrice']
+    for label, (low, high) in price_ranges.items():
+        if low <= price < high:
+            price_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Listings by price range:")
+for label, count in price_counts.items():
+    print(f"{label}: {count}")
+
+# Long-Term Leases
+
+# === Define Date Range ===
+end_date = datetime.strptime("2025-07-19", "%Y-%m-%d")
+start_date = end_date - timedelta(days=90)
+
+start_str = start_date.strftime("%Y-%m-%dT00:00:00Z")
+end_str = end_date.strftime("%Y-%m-%dT23:59:59Z")
+
+# All Property Types
+
+filter_query = (
+    f"$filter=(OnMarketDate ge {start_str} and OnMarketDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential Lease') and "
+    f"(PropertySubType eq '1/2 Duplex' or PropertySubType eq 'Condo - Hotel' or PropertySubType eq 'Condominium' or PropertySubType eq 'Dock-Rackominium' or PropertySubType eq 'Farm' or PropertySubType eq 'Garage Condo' or PropertySubType eq 'Manufactured Home' or PropertySubType eq 'Mobile Home' or PropertySubType eq 'Modular Home' or PropertySubType eq 'Single Family Residence' or PropertySubType eq 'Townhouse' or PropertySubType eq 'Villa') and "
+    f"(StandardStatus eq 'Active') and "
+    f"(STELLAR_LongTermYN eq true)"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,OnMarketDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+rent_ranges = {
+    "<$1,500": (0, 1500),
+    "$1,500-$2,000": (1500, 2000),
+    "$2,000-$3,000": (2000, 3000),
+    "$3,000-$4,000": (3000, 4000),
+    "$4,000-$5,000": (4000, 5000),
+    "$5,000>": (5000, float('inf'))
+}
+
+rent_counts = {label: 0 for label in rent_ranges}
+
+for _, row in df.iterrows():
+    rent = row['ListPrice']
+    for label, (low, high) in rent_ranges.items():
+        if low <= rent < high:
+            rent_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Long-term lease listings by rent range:")
+for label, count in rent_counts.items():
+    print(f"{label}: {count}")
+
+#   Single Family Homes
+
+filter_query = (
+    f"$filter=(OnMarketDate ge {start_str} and OnMarketDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential Lease') and "
+    f"(StandardStatus eq 'Active') and "
+    f"(PropertySubType eq 'Single Family Residence') and "
+    f"(STELLAR_LongTermYN eq true)"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,OnMarketDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+rent_ranges = {
+    "<$1,500": (0, 1500),
+    "$1,500-$2,000": (1500, 2000),
+    "$2,000-$3,000": (2000, 3000),
+    "$3,000-$4,000": (3000, 4000),
+    "$4,000-$5,000": (4000, 5000),
+    "$5,000>": (5000, float('inf'))
+}
+
+rent_counts = {label: 0 for label in rent_ranges}
+
+for _, row in df.iterrows():
+    rent = row['ListPrice']
+    for label, (low, high) in rent_ranges.items():
+        if low <= rent < high:
+            rent_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Long-term lease listings by rent range:")
+for label, count in rent_counts.items():
+    print(f"{label}: {count}")
+
+# Townhouse and Condos
+
+filter_query = (
+    f"$filter=(OnMarketDate ge {start_str} and OnMarketDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertySubType eq 'Townhouse' or PropertySubType eq 'Condominium') and "
+    f"(StandardStatus eq 'Active') and "
+    f"(STELLAR_LongTermYN eq true)"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,OnMarketDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+rent_ranges = {
+    "<$1,500": (0, 1500),
+    "$1,500-$2,000": (1500, 2000),
+    "$2,000-$3,000": (2000, 3000),
+    "$3,000-$4,000": (3000, 4000),
+    "$4,000-$5,000": (4000, 5000),
+    "$5,000>": (5000, float('inf'))
+}
+
+rent_counts = {label: 0 for label in rent_ranges}
+
+for _, row in df.iterrows():
+    rent = row['ListPrice']
+    for label, (low, high) in rent_ranges.items():
+        if low <= rent < high:
+            rent_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Long-term lease listings by rent range:")
+for label, count in rent_counts.items():
+    print(f"{label}: {count}")
+
+# PENDING
+# === Define Date Range ===
+end_date = datetime.strptime("2025-07-19", "%Y-%m-%d")
+start_date = end_date - timedelta(days=6)
+
+start_str = start_date.strftime("%Y-%m-%dT00:00:00Z")
+end_str = end_date.strftime("%Y-%m-%dT23:59:59Z")
+# All Property Types
+
+filter_query = (
+    f"$filter=(ContractStatusChangeDate ge {start_str} and ContractStatusChangeDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential Lease') and "
+    f"(PropertySubType eq '1/2 Duplex' or PropertySubType eq 'Condo - Hotel' or PropertySubType eq 'Condominium' or PropertySubType eq 'Dock-Rackominium' or PropertySubType eq 'Farm' or PropertySubType eq 'Garage Condo' or PropertySubType eq 'Manufactured Home' or PropertySubType eq 'Mobile Home' or PropertySubType eq 'Modular Home' or PropertySubType eq 'Single Family Residence' or PropertySubType eq 'Townhouse' or PropertySubType eq 'Villa') and "
+    f"(StandardStatus eq 'Pending') and "
+    f"(STELLAR_LongTermYN eq true)"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,ContractStatusChangeDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+rent_ranges = {
+    "<$1,500": (0, 1500),
+    "$1,500-$2,000": (1500, 2000),
+    "$2,000-$3,000": (2000, 3000),
+    "$3,000-$4,000": (3000, 4000),
+    "$4,000-$5,000": (4000, 5000),
+    "$5,000>": (5000, float('inf'))
+}
+
+rent_counts = {label: 0 for label in rent_ranges}
+
+for _, row in df.iterrows():
+    rent = row['ListPrice']
+    for label, (low, high) in rent_ranges.items():
+        if low <= rent < high:
+            rent_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Long-term lease listings by rent range:")
+for label, count in rent_counts.items():
+    print(f"{label}: {count}")
+
+#   Single Family Homes
+
+filter_query = (
+    f"$filter=(ContractStatusChangeDate ge {start_str} and ContractStatusChangeDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertyType eq 'Residential Lease') and "
+    f"(StandardStatus eq 'Pending') and "
+    f"(PropertySubType eq 'Single Family Residence') and "
+    f"(STELLAR_LongTermYN eq true)"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,ContractStatusChangeDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+rent_ranges = {
+    "<$1,500": (0, 1500),
+    "$1,500-$2,000": (1500, 2000),
+    "$2,000-$3,000": (2000, 3000),
+    "$3,000-$4,000": (3000, 4000),
+    "$4,000-$5,000": (4000, 5000),
+    "$5,000>": (5000, float('inf'))
+}
+
+rent_counts = {label: 0 for label in rent_ranges}
+
+for _, row in df.iterrows():
+    rent = row['ListPrice']
+    for label, (low, high) in rent_ranges.items():
+        if low <= rent < high:
+            rent_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Long-term lease listings by rent range:")
+for label, count in rent_counts.items():
+    print(f"{label}: {count}")
+
+# Townhouse and Condos
+
+filter_query = (
+    f"$filter=(ContractStatusChangeDate ge {start_str} and ContractStatusChangeDate le {end_str}) and "
+    f"(CountyOrParish eq 'Osceola' or CountyOrParish eq 'Orange' or CountyOrParish eq 'Seminole' or CountyOrParish eq 'Polk' or CountyOrParish eq 'Lake') and "
+    f"(PropertySubType eq 'Townhouse' or PropertySubType eq 'Condominium') and "
+    f"(StandardStatus eq 'Pending') and "
+    f"(STELLAR_LongTermYN eq true)"
+)
+
+select_fields = "$select=ListingId,ListPrice,CountyOrParish,City,PropertyType,PropertySubType,ContractStatusChangeDate"
+
+# === Fetch All Pages of Data ===
+base_url = f"https://api.bridgedataoutput.com/api/v2/OData/stellar/Property?{filter_query}&{select_fields}"
+
+all_listings = []
+current_url = base_url
+
+while True:
+    response = requests.get(current_url, headers=headers)
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+        break
+
+    data = response.json()
+    all_listings.extend(data.get("value", []))
+
+    next_link = data.get("@odata.nextLink")
+    if not next_link:
+        break
+    current_url = next_link
+
+df = pd.DataFrame(all_listings)
+print(f"Returned {len(df)} listings.")
+
+# === Count Listings in Price Ranges ===
+rent_ranges = {
+    "<$1,500": (0, 1500),
+    "$1,500-$2,000": (1500, 2000),
+    "$2,000-$3,000": (2000, 3000),
+    "$3,000-$4,000": (3000, 4000),
+    "$4,000-$5,000": (4000, 5000),
+    "$5,000>": (5000, float('inf'))
+}
+
+rent_counts = {label: 0 for label in rent_ranges}
+
+for _, row in df.iterrows():
+    rent = row['ListPrice']
+    for label, (low, high) in rent_ranges.items():
+        if low <= rent < high:
+            rent_counts[label] += 1
+            break
+
+# === Output Results ===
+print("Long-term lease listings by rent range:")
+for label, count in rent_counts.items():
+    print(f"{label}: {count}")
