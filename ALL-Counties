@@ -6,3 +6,5 @@ SERVER_TOKEN = "cfd3b486aa89092a950c6ec0f5842971"
 headers = {
     "Authorization": f"Bearer {SERVER_TOKEN}"
 }
+
+## All Property Types
